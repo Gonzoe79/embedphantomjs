@@ -25,6 +25,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Properties;
+
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -36,7 +37,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.log4j.Logger;
 
-public class PhantomJSReference {
+public class PhantomJSReference
+{
 
 	private static final Logger LOGGER = Logger.getLogger(PhantomJSReference.class);
 
@@ -46,7 +48,8 @@ public class PhantomJSReference {
 
 	public static final String PHANTOMJS_DOWNLOAD_BINARY_PATH = "/bin/phantomjs";
 
-	public static PhantomJSReferenceBuilder create() {
+	public static PhantomJSReferenceBuilder create()
+	{
 		return new PhantomJSReferenceBuilder();
 	}
 
@@ -55,7 +58,8 @@ public class PhantomJSReference {
 	 * object. Ref. Effective Java Second Edition Pag. 14.
 	 * 
 	 */
-	public static class PhantomJSReferenceBuilder {
+	public static class PhantomJSReferenceBuilder
+	{
 		private Version version = Version.v_1_9_2;
 		private String architecture = System.getProperty("os.arch").toLowerCase();
 		private String hostOs;
@@ -63,35 +67,41 @@ public class PhantomJSReference {
 		private String downloadUrl = "http://phantomjs.googlecode.com/files/";
 		private String targetInstallationFolder = System.getProperty("user.home") + "/.embedphantomjs";
 
-		public PhantomJSReferenceBuilder withVersion(Version version) {
+		public PhantomJSReferenceBuilder withVersion(Version version)
+		{
 			this.version = version;
 			return this;
 		}
 
-		public PhantomJSReferenceBuilder withArchitecture(String architecture) {
+		public PhantomJSReferenceBuilder withArchitecture(String architecture)
+		{
 			this.architecture = architecture;
 			return this;
 		}
 
-		public PhantomJSReferenceBuilder withHostOS(String hostOs) {
+		public PhantomJSReferenceBuilder withHostOS(String hostOs)
+		{
 			this.hostOs = hostOs;
 			return this;
 		}
 
-		public PhantomJSReferenceBuilder useDownloadUrl(String downloadUrl) {
+		public PhantomJSReferenceBuilder useDownloadUrl(String downloadUrl)
+		{
 			this.downloadUrl = downloadUrl;
 			return this;
 		}
 
-		public PhantomJSReferenceBuilder useTargetInstallationFolder(String targetInstallationFolder) {
+		public PhantomJSReferenceBuilder useTargetInstallationFolder(String targetInstallationFolder)
+		{
 			this.targetInstallationFolder = targetInstallationFolder;
 			return this;
 		}
 
-		public PhantomJSReference build() {
+		public PhantomJSReference build()
+		{
 			return new PhantomJSReference(this);
 		}
-		
+
 		public PhantomJSReferenceBuilder()
 		{
 			String os = System.getProperty("os.name").toLowerCase();
@@ -111,7 +121,8 @@ public class PhantomJSReference {
 	private String targetInstallationFolder;
 	private String binaryPath;
 
-	private PhantomJSReference(PhantomJSReferenceBuilder builder) {
+	private PhantomJSReference(PhantomJSReferenceBuilder builder)
+	{
 		this.version = builder.version;
 		this.architecture = builder.architecture;
 		this.hostOs = builder.hostOs;
@@ -119,55 +130,74 @@ public class PhantomJSReference {
 		this.targetInstallationFolder = builder.targetInstallationFolder;
 	}
 
-	public String getBinaryPath() {
-		if (binaryPath == null) {
+	public String getBinaryPath()
+	{
+		if (binaryPath == null)
+		{
 			ensureBinary();
 		}
 		return binaryPath;
 	}
 
-	public synchronized void ensureBinary() {
+	public synchronized void ensureBinary()
+	{
 
-		if (binaryPath != null) {
+		if (binaryPath != null)
+		{
 			// The binary is already ensure
 			return;
 		}
 
 		// Check if phantomjs is installed locally
-		if (Version.NATIVE.equals(version)) {
+		if (Version.NATIVE.equals(version))
+		{
 
 			LOGGER.debug("Checking PhantomJS native installation");
-			if (this.checkPhantomJSBinaryAnyVersion(PHANTOMJS_NATIVE_CMD)) {
+			if (this.checkPhantomJSBinaryAnyVersion(PHANTOMJS_NATIVE_CMD))
+			{
 				LOGGER.debug("Native installation founded");
 				binaryPath = PHANTOMJS_NATIVE_CMD;
 				return;
-			} else {
+			} else
+			{
 				throw new RuntimeException("Invalid native installation!");
 			}
 		}
 
-		if (!getVersion().isDownloadSopported()) {
+		if (!getVersion().isDownloadSopported())
+		{
 			throw new RuntimeException("Unsopported version for downloading!");
 		}
 
-		File binaryFile = new File(this.getTargetInstallationFolder() + "/" + this.getVersion().getDescription() + "/phantomjs");
+		String filePath = this.getTargetInstallationFolder() + "/" + this.getVersion().getDescription() + "/phantomjs";
+		if (this.hostOs.equals("win"))
+		{
+			filePath += ".exe";
+		}
+
+		File binaryFile = new File(filePath);
 		String binaryFilePath = binaryFile.getAbsolutePath();
 
 		// Check if phantomjs is already installed in target path
 		LOGGER.debug("Checking PhantomJS installation in " + binaryFilePath);
-		if (this.checkPhantomJSBinaryVersion(binaryFilePath, getVersion())) {
+		if (this.checkPhantomJSBinaryVersion(binaryFilePath, getVersion()))
+		{
 			LOGGER.debug("PhantomJS founded in " + binaryFilePath);
 			binaryPath = binaryFilePath;
-		} else {
+		} else
+		{
 			LOGGER.debug("PhantomJS not founded in " + binaryFilePath);
 
-			try {
+			try
+			{
 				downloadPhantomJS(binaryFile);
-			} catch (IOException e) {
+			} catch (IOException e)
+			{
 				throw new RuntimeException(e);
 			}
 
-			if (!this.checkPhantomJSBinaryVersion(binaryFilePath, getVersion())) {
+			if (!this.checkPhantomJSBinaryVersion(binaryFilePath, getVersion()))
+			{
 				throw new RuntimeException("Invalid download");
 			}
 
@@ -175,7 +205,8 @@ public class PhantomJSReference {
 		}
 	}
 
-	private void downloadPhantomJS(File binaryFile) throws IOException {
+	private void downloadPhantomJS(File binaryFile) throws IOException
+	{
 		Properties properties = new Properties();
 		properties.load(this.getClass().getClassLoader().getResourceAsStream(PHANTOMJS_DATA_FILE));
 
@@ -185,7 +216,8 @@ public class PhantomJSReference {
 
 		LOGGER.debug("System Data: Arch [" + architecture + "] - OS [" + this.getHostOs() + "]");
 
-		if (this.getHostOs().equals("linux")) {
+		if (this.getHostOs().equals("linux"))
+		{
 			name = String.format(name, architecture);
 		}
 
@@ -199,30 +231,39 @@ public class PhantomJSReference {
 
 		ArchiveInputStream archiveInputStream = null;
 
-		if (phantomJsCompressedFile.getName().endsWith(".zip")) {
+		if (phantomJsCompressedFile.getName().endsWith(".zip"))
+		{
 
 			archiveInputStream = new ZipArchiveInputStream(new FileInputStream(phantomJsCompressedFile));
 
-		} else if (phantomJsCompressedFile.getName().endsWith(".bz2")) {
+		} else if (phantomJsCompressedFile.getName().endsWith(".bz2"))
+		{
 
-			archiveInputStream = new TarArchiveInputStream(new BZip2CompressorInputStream(new FileInputStream(phantomJsCompressedFile)));
+			archiveInputStream = new TarArchiveInputStream(
+					new BZip2CompressorInputStream(new FileInputStream(phantomJsCompressedFile)));
 
-		} else if (phantomJsCompressedFile.getName().endsWith(".gz")) {
+		} else if (phantomJsCompressedFile.getName().endsWith(".gz"))
+		{
 
-			archiveInputStream = new TarArchiveInputStream(new GzipCompressorInputStream(new FileInputStream(phantomJsCompressedFile)));
+			archiveInputStream = new TarArchiveInputStream(
+					new GzipCompressorInputStream(new FileInputStream(phantomJsCompressedFile)));
 
 		}
 
 		ArchiveEntry entry;
-		while ((entry = archiveInputStream.getNextEntry()) != null) {
-			if (entry.getName().endsWith(PHANTOMJS_DOWNLOAD_BINARY_PATH) || entry.getName().toLowerCase().endsWith("phantomjs.exe")) {
+		while ((entry = archiveInputStream.getNextEntry()) != null)
+		{
+			if (entry.getName().endsWith(PHANTOMJS_DOWNLOAD_BINARY_PATH)
+					|| entry.getName().toLowerCase().endsWith("phantomjs.exe"))
+			{
 
 				// Create target folder
 				new File(this.getTargetInstallationFolder() + "/" + this.getVersion().getDescription()).mkdirs();
 
 				FileUtils.forceMkdir(new File(binaryFile.getParent()));
 
-				if (!binaryFile.exists()) {
+				if (!binaryFile.exists())
+				{
 					binaryFile.createNewFile();
 				}
 
@@ -242,8 +283,10 @@ public class PhantomJSReference {
 		archiveInputStream.close();
 	}
 
-	private String checkPhantomJSBinary(String path) {
-		try {
+	private String checkPhantomJSBinary(String path)
+	{
+		try
+		{
 			Process process = Runtime.getRuntime().exec(path + " --version");
 			process.waitFor();
 
@@ -251,45 +294,54 @@ public class PhantomJSReference {
 
 			return processOutput.substring(0, 5);
 
-		} catch (Exception e) {
+		} catch (Exception e)
+		{
 			LOGGER.warn(e);
 		}
 
 		return null;
 	}
 
-	private Boolean checkPhantomJSBinaryAnyVersion(String path) {
+	private Boolean checkPhantomJSBinaryAnyVersion(String path)
+	{
 		String outputVersion = checkPhantomJSBinary(path);
 		return Version.fromValue(outputVersion) != null;
 	}
 
-	private Boolean checkPhantomJSBinaryVersion(String path, Version version) {
+	private Boolean checkPhantomJSBinaryVersion(String path, Version version)
+	{
 		String outputVersion = checkPhantomJSBinary(path);
 		return version.getDescription().equals(outputVersion);
 	}
 
-	public Version getVersion() {
+	public Version getVersion()
+	{
 		return this.version;
 	}
 
-	public String getHostOs() {
+	public String getHostOs()
+	{
 		return this.hostOs;
 	}
 
-	public String getArchitecture() {
+	public String getArchitecture()
+	{
 		return this.architecture;
 	}
 
-	public String getDownloadUrl() {
+	public String getDownloadUrl()
+	{
 		return this.downloadUrl;
 	}
 
-	public String getTargetInstallationFolder() {
+	public String getTargetInstallationFolder()
+	{
 		return this.targetInstallationFolder;
 	}
 
 	@Override
-	public String toString() {
+	public String toString()
+	{
 		return ToStringBuilder.reflectionToString(this);
 	}
 }

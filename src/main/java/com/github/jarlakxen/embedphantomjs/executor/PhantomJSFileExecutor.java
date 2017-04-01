@@ -38,67 +38,102 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 
-public class PhantomJSFileExecutor {
+public class PhantomJSFileExecutor
+{
 
 	private static final Logger LOGGER = Logger.getLogger(PhantomJSFileExecutor.class);
 
 	private ListeningExecutorService processExecutorService;
-	
+
 	private ExecutorService timeoutExecutorService;
 
 	private PhantomJSReference phantomReference;
 
+	public PhantomJSReference getPhantomReference()
+	{
+		return phantomReference;
+	}
+
+	public void setPhantomReference(PhantomJSReference phantomReference)
+	{
+		this.phantomReference = phantomReference;
+	}
+
 	private ExecutionTimeout executionTimeout;
-	
-	public PhantomJSFileExecutor(PhantomJSReference phantomReference, ExecutionTimeout executionTimeout) {
+
+	public PhantomJSFileExecutor(PhantomJSReference phantomReference, ExecutionTimeout executionTimeout)
+	{
 		this(phantomReference, Executors.newCachedThreadPool(), executionTimeout);
 	}
 
-	public PhantomJSFileExecutor(PhantomJSReference phantomReference, ExecutorService executorService, ExecutionTimeout executionTimeout) {
+	public PhantomJSFileExecutor(PhantomJSReference phantomReference, ExecutorService executorService,
+			ExecutionTimeout executionTimeout)
+	{
 		this.phantomReference = phantomReference;
 		this.executionTimeout = executionTimeout;
 		this.processExecutorService = MoreExecutors.listeningDecorator(executorService);
 		this.timeoutExecutorService = Executors.newCachedThreadPool();
 	}
 
-	public ListenableFuture<String> execute(final String fileContent, final String... args) {
-		try {
+	public ListenableFuture<String> execute(final String fileContent, final String... args)
+	{
+		try
+		{
 			final File tmp = File.createTempFile(RandomStringUtils.randomAlphabetic(10), ".js");
 			FileUtils.write(tmp, fileContent);
+
 			ListenableFuture<String> result = execute(tmp, args);
 
-			Futures.addCallback(result, new FutureCallback<String>() {
-				public void onSuccess(String explosion) {
+			Futures.addCallback(result, new FutureCallback<String>()
+			{
+				public void onSuccess(String explosion)
+				{
 					onComplete();
 				}
 
-				public void onFailure(Throwable thrown) {
+				public void onFailure(Throwable thrown)
+				{
 					LOGGER.error("", thrown);
 					onComplete();
 				}
 
-				public void onComplete() {
-					if (tmp != null) {
+				public void onComplete()
+				{
+					if (tmp != null)
+					{
 						tmp.delete();
 					}
 				}
 			});
 
 			return result;
-		} catch (Exception e) {
+		} catch (Exception e)
+		{
 			throw new RuntimeException(e);
 		}
 	}
 
-	public ListenableFuture<String> execute(final File sourceFile, final String... args) {
-		final String cmd = this.phantomReference.getBinaryPath() + " " + sourceFile.getAbsolutePath() + " " + StringUtils.join(args, " ");
-		try {
+	public ListenableFuture<String> execute(final File sourceFile, final String... args)
+	{
+		return execute(null, sourceFile, args);
+	}
+
+	public ListenableFuture<String> execute(final String phantomJsArgs, final File sourceFile, final String... args)
+	{
+		final String cmd = this.phantomReference.getBinaryPath()
+				+ (phantomJsArgs != null ? " " + phantomJsArgs + " " : "") + " \"" + sourceFile.getAbsolutePath()
+				+ "\" " + StringUtils.join(args, " ");
+		System.out.println(cmd);
+		try
+		{
 			final Process process = Runtime.getRuntime().exec(cmd);
 			LOGGER.info("Command to execute: " + cmd);
 
-			final ListenableFuture<String> action = processExecutorService.submit(new Callable<String>() {
+			final ListenableFuture<String> action = processExecutorService.submit(new Callable<String>()
+			{
 				@Override
-				public String call() throws Exception {
+				public String call() throws Exception
+				{
 					LOGGER.info("Command to execute: " + cmd);
 					String output = IOUtils.toString(process.getInputStream());
 					process.waitFor();
@@ -107,12 +142,16 @@ public class PhantomJSFileExecutor {
 				}
 			});
 
-			timeoutExecutorService.submit(new Runnable() {
+			timeoutExecutorService.submit(new Runnable()
+			{
 				@Override
-				public void run() {
-					try {
+				public void run()
+				{
+					try
+					{
 						action.get(executionTimeout.getTimeout(), executionTimeout.getUnit());
-					} catch (Exception e) {
+					} catch (Exception e)
+					{
 						action.cancel(false);
 						process.destroy();
 					}
@@ -121,7 +160,8 @@ public class PhantomJSFileExecutor {
 
 			return action;
 
-		} catch (Exception e) {
+		} catch (Exception e)
+		{
 			throw new RuntimeException(e);
 		}
 	}
