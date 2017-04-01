@@ -49,6 +49,16 @@ public class PhantomJSFileExecutor
 
 	private PhantomJSReference phantomReference;
 
+	public PhantomJSReference getPhantomReference()
+	{
+		return phantomReference;
+	}
+
+	public void setPhantomReference(PhantomJSReference phantomReference)
+	{
+		this.phantomReference = phantomReference;
+	}
+
 	private ExecutionTimeout executionTimeout;
 
 	public PhantomJSFileExecutor(PhantomJSReference phantomReference, ExecutionTimeout executionTimeout)
